@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines Game - Warunkowy Odbiór</title>
+    <style>
+        :root {
+            --bg-color: #16182c;
+            --panel-color: #202241;
+            --input-bg: #2a2d56;
+            --accent-gold: #ffb703;
+            --accent-blue: #3b82f6;
+            --text-main: #ffffff;
+            --text-muted: #8b8ea9;
+            --green: #2a9d8f;
+            --red: #e63946;
+            --purple: #8a2be2;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-wrapper {
+            background-color: var(--panel-color);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 460px;
+            z-index: 1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #2d305d;
+            padding-bottom: 15px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .balance-box {
+            background-color: rgba(255, 183, 3, 0.15);
+            border: 1px dashed var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Mines Input */
+        .mines-input-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            padding: 6px 12px;
+            gap: 10px;
+        }
+
+        .mines-input-container input {
+            width: 50px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            outline: none;
+            text-align: center;
+        }
+
+        .quick-mines {
+            display: flex;
+            gap: 6px;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+
+        .quick-btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .quick-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .quick-btn.active {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+        }
+
+        /* Play Amount */
+        .play-amount-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            padding: 10px 14px;
+            gap: 10px;
+        }
+
+        .coin-icon {
+            background-color: var(--accent-gold);
+            color: var(--bg-color);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 13px;
+        }
+
+        .play-amount-container input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            outline: none;
+            width: 100%;
+        }
+
+        /* Suwak */
+        .native-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+            margin: 15px 0;
+            cursor: pointer;
+            display: block;
+            position: relative;
+            z-index: 10;
+        }
+
+        .native-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 10px var(--accent-gold);
+            cursor: pointer;
+            border: 2px solid var(--panel-color);
+        }
+        .native-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 10px var(--accent-gold);
+            cursor: pointer;
+            border: 2px solid var(--panel-color);
+        }
+
+        .slider-scale {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+            margin-top: -5px;
+        }
+        .slider-scale span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .slider-scale span.active {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        /* Przyciski */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: block;
+            position: relative;
+            z-index: 15;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .btn-start { background-color: var(--accent-blue); color: white; }
+        .btn-start:hover { background-color: #2563eb; }
+        
+        .btn-cashout { background-color: var(--green); color: white; display: none; }
+        .btn-cashout:hover { background-color: #1f7a6f; }
+
+        .btn-reset { 
+            background-color: var(--red); 
+            color: white; 
+            display: none; 
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+        .btn-reset:hover { background-color: #c92a36; }
+
+        /* Hazard 50/50 */
+        .gamble-container {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .btn-take-normal { background-color: #4a4e69; color: white; }
+        .btn-take-normal:hover { background-color: #3d405b; }
+        .btn-gamble-double { background-color: var(--purple); color: white; font-size: 17px; animation: pulsePurple 1.2s infinite alternate; }
+        .btn-gamble-double:hover { background-color: #721acb; }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px rgba(230, 57, 70, 0.4); }
+            100% { box-shadow: 0 0 20px rgba(230, 57, 70, 0.8); }
+        }
+        @keyframes pulsePurple {
+            0% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.4); transform: scale(1); }
+            100% { box-shadow: 0 0 15px rgba(138, 43, 226, 0.8); transform: scale(1.01); }
+        }
+
+        .status-msg {
+            text-align: center;
+            margin: 15px 0 5px 0;
+            font-weight: 600;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        /* Plansza */
+        #grid {
+            display: grid;
+            gap: 6px;
+            margin: 20px auto 0 auto;
+            justify-content: center;
+            background-color: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 410px;
+        }
+
+        .cell {
+            background-color: #2c2f5d;
+            border-radius: 6px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            user-select: none;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            color: transparent;
+            position: relative;
+            transform: scale(0);
+            opacity: 0;
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .cell::before {
+            content: "";
+            padding-bottom: 100%;
+            display: block;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .grid-preview .cell {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .grid-active .cell {
+            cursor: pointer;
+            opacity: 1;
+        }
+        .grid-active .cell:hover {
+            background-color: #383c77;
+            transform: scale(1.04);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .cell.safe {
+            background-color: var(--green) !important;
+            color: white !important;
+            animation: flipReveal 0.25s ease-out forwards;
+        }
+
+        .cell.mine {
+            background-color: var(--red) !important;
+            color: white !important;
+            animation: shakeBoom 0.3s ease-in-out forwards;
+        }
+
+        @keyframes flipReveal {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.05) rotateY(90deg); }
+            100% { transform: scale(1) rotateY(0deg); }
+        }
+
+        @keyframes shakeBoom {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px) scale(1.05); }
+            75% { transform: translateX(3px) scale(1.05); }
+        }
+
+        .cell.disabled {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <div class="header">
+        <h2>Mines Game</h2>
+        <div class="balance-box">
+            <span>SALDO:</span>
+            <span class="coin-icon">B</span>
+            <span id="balance">50</span>
+        </div>
+    </div>
+
+    <div class="setting-group">
+        <label>Mines</label>
+        <div class="mines-input-container">
+            <input type="number" id="minesCount" min="1" max="99" value="3" oninput="updateMinesFromInput(this.value)">
+            <div class="quick-mines">
+                <button class="quick-btn" onclick="quickSelectMines(1, this)">1</button>
+                <button class="quick-btn active" onclick="quickSelectMines(3, this)">3</button>
+                <button class="quick-btn" onclick="quickSelectMines(5, this)">5</button>
+                <button class="quick-btn" onclick="quickSelectMines(10, this)">10</button>
+                <button class="quick-btn" onclick="quickSelectMines(15, this)">15</button>
+                <button class="quick-btn" onclick="quickSelectMines(20, this)">20</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="setting-group">
+        <label>Play amount (Min: 10)</label>
+        <div class="play-amount-container">
+            <span class="coin-icon">B</span>
+            <input type="number" id="betAmount" value="10" min="10">
+        </div>
+    </div>
+
+    <div class="setting-group">
+        <label>Grid Size: <span id="gridValue">5x5</span></label>
+        <input type="range" id="gridRange" class="native-slider" min="2" max="10" value="5" oninput="handleSliderChange(this.value)">
+        <div class="slider-scale" id="sliderScale"></div>
+    </div>
+
+    <button class="btn btn-start" id="startBtn" onclick="startGame()">Graj</button>
+    
+    <button class="btn btn-cashout" id="cashoutBtn" onclick="preCashoutMenu()">Odbierz wygraną</button>
+    
+    <div class="gamble-container" id="gambleContainer">
+        <button class="btn btn-take-normal" onclick="confirmNormalCashout()">Weź standardową wygraną</button>
+        <button class="btn btn-gamble-double" onclick="executeGamble5050()">Zaryzykuj 50/50 o x2! 🎲</button>
+    </div>
+
+    <button class="btn btn-reset" id="resetBtn" onclick="resetGameBalance()">Zresetuj Saldo (Zacznij od nowa)</button>
+
+    <div class="status-msg" id="statusMsg">Ustaw parametry i rozpocznij grę!</div>
+
+    <div id="grid" class="grid-preview"></div>
+</div>
+
+<script>
+    let balance = 50;
+    let currentBet = 0;
+    let gridSize = 5;
+    let totalMines = 3;
+    let revealedCount = 0;
+    let isGameActive = false;
+    let isGamblePhase = false;
+    let minePositions = [];
+    let currentMultiplier = 1.0;
+    let pendingWinAmount = 0; 
+
+    const minesCountInput = document.getElementById('minesCount');
+    const betAmountInput = document.getElementById('betAmount');
+    const balanceDisplay = document.getElementById('balance');
+    const gridContainer = document.getElementById('grid');
+    const startBtn = document.getElementById('startBtn');
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const gambleContainer = document.getElementById('gambleContainer');
+    const statusMsg = document.getElementById('statusMsg');
+    const gridValueLabel = document.getElementById('gridValue');
+    const gridRange = document.getElementById('gridRange');
+    const sliderScale = document.getElementById('sliderScale');
+
+    renderScale();
+    drawGrid();
+
+    function renderScale() {
+        sliderScale.innerHTML = '';
+        for(let i=2; i<=10; i++){
+            const span = document.createElement('span');
+            span.innerText = i;
+            if(i === gridSize) span.className = 'active';
+            sliderScale.appendChild(span);
+        }
+    }
+
+    function handleSliderChange(val) {
+        if (isGameActive) return;
+        gridSize = parseInt(val);
+        gridValueLabel.innerText = `${gridSize}x${gridSize}`;
+        renderScale();
+
+        let maxMines = (gridSize * gridSize) - 1;
+        if (totalMines > maxMines) {
+            totalMines = maxMines;
+            minesCountInput.value = totalMines;
+            updateQuickButtonsHighlight(totalMines);
+        }
+        minesCountInput.max = maxMines;
+        drawGrid();
+    }
+
+    function quickSelectMines(num, element) {
+        if (isGameActive) return;
+        let maxMines = (gridSize * gridSize) - 1;
+        if (num > maxMines) {
+            alert(`Maksymalna liczba min dla tego pola to ${maxMines}!`);
+            return;
+        }
+        totalMines = num;
+        minesCountInput.value = num;
+
+        document.querySelectorAll('.quick-btn').forEach(btn => btn.classList.remove('active'));
+        if (element) element.classList.add('active');
+    }
+
+    function updateMinesFromInput(val) {
+        if (isGameActive) return;
+        let num = parseInt(val) || 1;
+        let maxMines = (gridSize * gridSize) - 1;
+        
+        if (num > maxMines) {
+            num = maxMines;
+            minesCountInput.value = num;
+        } else if (num < 1) {
+            num = 1;
+            minesCountInput.value = num;
+        }
+        totalMines = num;
+        updateQuickButtonsHighlight(num);
+    }
+
+    function updateQuickButtonsHighlight(num) {
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            if (parseInt(btn.innerText) === num) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function drawGrid() {
+        gridContainer.innerHTML = '';
+        gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+        const totalCells = gridSize * gridSize;
+        for (let i = 0; i < totalCells; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            cell.style.animationDelay = `${(i % gridSize) * 0.015 + Math.floor(i / gridSize) * 0.015}s`;
+            
+            if (gridSize > 8) {
+                cell.style.fontSize = '11px';
+            } else if (gridSize > 6) {
+                cell.style.fontSize = '15px';
+            } else {
+                cell.style.fontSize = '22px';
+            }
+            gridContainer.appendChild(cell);
+        }
+    }
+
+    function calculateMultiplier() {
+        let totalCells = gridSize * gridSize;
+        let safeCells = totalCells - totalMines;
+        if (revealedCount === 0) return 1.0;
+        
+        let p = 1.0;
+        for (let i = 0; i < revealedCount; i++) {
+            p *= (safeCells - i) / (totalCells - i);
+        }
+        return (1 / p * 0.96).toFixed(2);
+    }
+
+    function startGame() {
+        let bet = parseInt(betAmountInput.value);
+        let totalCells = gridSize * gridSize;
+
+        if (isNaN(bet) || bet < 10) {
+            alert("Minimalny zakład to 10 monet!");
+            return;
+        }
+        if (bet > balance) {
+            alert("Brak wystarczających środków!");
+            return;
+        }
+
+        balance -= bet;
+        currentBet = bet;
+        balanceDisplay.innerText = balance;
+
+        revealedCount = 0;
+        currentMultiplier = 1.0;
+        pendingWinAmount = 0;
+        isGameActive = true;
+        isGamblePhase = false;
+        statusMsg.innerText = "Gra rozpoczęta! Kliknij przynajmniej jedno pole, aby móc odebrać wygraną.";
+        statusMsg.style.color = "#ffffff";
+        
+        gridContainer.className = 'grid-active';
+        
+        minesCountInput.disabled = true;
+        betAmountInput.disabled = true;
+        gridRange.disabled = true;
+
+        startBtn.style.display = "none";
+        resetBtn.style.display = "none";
+        gambleContainer.style.display = "none";
+        
+        // Krytyczna zmiana: Ukrywamy przycisk cashout dopóki gracz nic nie odkryje
+        cashoutBtn.style.display = "none"; 
+
+        minePositions = [];
+        while (minePositions.length < totalMines) {
+            let rand = Math.floor(Math.random() * totalCells);
+            if (!minePositions.includes(rand)) {
+                minePositions.push(rand);
+            }
+        }
+
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            cell.innerText = "";
+            cell.className = "cell"; 
+            cell.style.animationDelay = "0s"; 
+            cell.onclick = () => clickCell(cell, index);
+        });
+    }
+
+    function clickCell(cell, index) {
+        if (!isGameActive || isGamblePhase || cell.classList.contains('safe')) return;
+
+        if (minePositions.includes(index)) {
+            cell.classList.add('mine');
+            cell.innerText = "💣";
+            gameOver(false, true, 0);
+        } else {
+            cell.classList.add('safe');
+            cell.innerText = "💎";
+            revealedCount++;
+            
+            currentMultiplier = calculateMultiplier();
+            pendingWinAmount = Math.floor(currentBet * currentMultiplier);
+            
+            // NOWOŚĆ: Pokazujemy przycisk odbioru DOPIERO po pomyślnym kliknięciu pola
+            if (revealedCount > 0) {
+                cashoutBtn.style.display = "block";
+                cashoutBtn.innerText = `Odbierz: B ${pendingWinAmount} (x${currentMultiplier})`;
+            }
+
+            if (revealedCount === (gridSize * gridSize) - totalMines) {
+                preCashoutMenu();
+            }
+        }
+    }
+
+    function preCashoutMenu() {
+        if (!isGameActive || revealedCount === 0) return; // blokada przed pustym odbiorem
+        isGamblePhase = true; 
+        cashoutBtn.style.display = "none";
+        gambleContainer.style.display = "flex"; 
+        statusMsg.innerText = `Wygrana z pól: B ${pendingWinAmount}. Podejmij decyzję:`;
+        statusMsg.style.color = "var(--accent-gold)";
+    }
+
+    function confirmNormalCashout() {
+        balance += pendingWinAmount;
+        balanceDisplay.innerText = balance;
+        statusMsg.innerText = `Wypłacono bezpiecznie B ${pendingWinAmount} (x${currentMultiplier})`;
+        statusMsg.style.color = "#2a9d8f";
+        gambleContainer.style.display = "none";
+        gameOver(true, false, pendingWinAmount);
+    }
+
+    function executeGamble5050() {
+        gambleContainer.style.display = "none";
+        const isSuccessful = Math.random() < 0.5;
+
+        if (isSuccessful) {
+            let doubleWin = pendingWinAmount * 2;
+            balance += doubleWin;
+            balanceDisplay.innerText = balance;
+            statusMsg.innerText = `💥 SUKCES! Podwoiłeś wygraną i zdobywasz B ${doubleWin}!`;
+            statusMsg.style.color = "var(--accent-gold)";
+            gameOver(true, false, doubleWin);
+        } else {
+            statusMsg.innerText = `❌ LOS CI NIE SPRZYJAŁ! Tracisz wszystko w grze ryzyka.`;
+            statusMsg.style.color = "#e63946";
+            gameOver(false, false, 0); 
+        }
+    }
+
+    function gameOver(isWin, hitMine = true, finalScore = 0) {
+        isGameActive = false;
+        isGamblePhase = false;
+        
+        gridContainer.className = 'grid-preview';
+        let cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            let idx = parseInt(cell.dataset.index);
+            cell.onclick = null; 
+            cell.classList.add('disabled');
+            if (minePositions.includes(idx)) {
+                cell.classList.add('mine');
+                cell.innerText = "💣";
+            }
+        });
+
+        if (hitMine && !isWin) {
+            statusMsg.innerText = "BOMBA! Trafiłeś na minę.";
+            statusMsg.style.color = "#e63946";
+        }
+
+        minesCountInput.disabled = false;
+        betAmountInput.disabled = false;
+        gridRange.disabled = false;
+
+        cashoutBtn.style.display = "none";
+        gambleContainer.style.display = "none";
+        
+        if (balance < 10) {
+            startBtn.style.display = "none";
+            resetBtn.style.display = "block";
+            statusMsg.innerText = "Bankructwo! Brak środków na minimalną stawkę (10 monet).";
+            statusMsg.style.color = "#e63946";
+        } else {
+            startBtn.style.display = "block";
+            resetBtn.style.display = "none";
+        }
+    }
+
+    function resetGameBalance() {
+        balance = 50;
+        balanceDisplay.innerText = balance;
+        statusMsg.innerText = "Konto doładowane! Możesz grać dalej.";
+        statusMsg.style.color = "#ffffff";
+        
+        resetBtn.style.display = "none";
+        startBtn.style.display = "block";
+        
+        drawGrid(); 
+    }
+</script>
+
+</body>
+</html>
