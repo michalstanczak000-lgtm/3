@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mines Game - Warunkowy Odbiór</title>
+    <title>Mines Game - Wersja z Hazardem 50/50</title>
     <style>
         :root {
             --bg-color: #16182c;
@@ -170,7 +170,7 @@
             width: 100%;
         }
 
-        /* Suwak */
+        /* Suwak wielkości planszy */
         .native-slider {
             width: 100%;
             -webkit-appearance: none;
@@ -223,7 +223,7 @@
             font-weight: 700;
         }
 
-        /* Przyciski */
+        /* Przyciski operacyjne */
         .btn {
             width: 100%;
             padding: 15px;
@@ -253,7 +253,7 @@
         }
         .btn-reset:hover { background-color: #c92a36; }
 
-        /* Hazard 50/50 */
+        /* Kontener wyboru 50/50 */
         .gamble-container {
             display: none;
             flex-direction: column;
@@ -409,8 +409,7 @@
     </div>
 
     <button class="btn btn-start" id="startBtn" onclick="startGame()">Graj</button>
-    
-    <button class="btn btn-cashout" id="cashoutBtn" onclick="preCashoutMenu()">Odbierz wygraną</button>
+    <button class="btn btn-cashout" id="cashoutBtn" onclick="preCashoutMenu()">Odbierz wygraną (Mnożnik: x1.00)</button>
     
     <div class="gamble-container" id="gambleContainer">
         <button class="btn btn-take-normal" onclick="confirmNormalCashout()">Weź standardową wygraną</button>
@@ -431,7 +430,7 @@
     let totalMines = 3;
     let revealedCount = 0;
     let isGameActive = false;
-    let isGamblePhase = false;
+    let isGamblePhase = false; // blokuje ruchy na planszy podczas okna wyboru 50/50
     let minePositions = [];
     let currentMultiplier = 1.0;
     let pendingWinAmount = 0; 
@@ -571,10 +570,9 @@
 
         revealedCount = 0;
         currentMultiplier = 1.0;
-        pendingWinAmount = 0;
         isGameActive = true;
         isGamblePhase = false;
-        statusMsg.innerText = "Gra rozpoczęta! Kliknij przynajmniej jedno pole, aby móc odebrać wygraną.";
+        statusMsg.innerText = "Gra rozpoczęta! Wybierz bezpieczne pola.";
         statusMsg.style.color = "#ffffff";
         
         gridContainer.className = 'grid-active';
@@ -586,9 +584,8 @@
         startBtn.style.display = "none";
         resetBtn.style.display = "none";
         gambleContainer.style.display = "none";
-        
-        // Krytyczna zmiana: Ukrywamy przycisk cashout dopóki gracz nic nie odkryje
-        cashoutBtn.style.display = "none"; 
+        cashoutBtn.style.display = "block";
+        cashoutBtn.innerText = `Odbierz wygraną: 0 (x1.00)`;
 
         minePositions = [];
         while (minePositions.length < totalMines) {
@@ -621,52 +618,53 @@
             
             currentMultiplier = calculateMultiplier();
             pendingWinAmount = Math.floor(currentBet * currentMultiplier);
-            
-            // NOWOŚĆ: Pokazujemy przycisk odbioru DOPIERO po pomyślnym kliknięciu pola
-            if (revealedCount > 0) {
-                cashoutBtn.style.display = "block";
-                cashoutBtn.innerText = `Odbierz: B ${pendingWinAmount} (x${currentMultiplier})`;
-            }
+            cashoutBtn.innerText = `Odbierz: B ${pendingWinAmount} (x${currentMultiplier})`;
 
+            // Automatyczne przejście do menu wypłaty przy odkryciu wszystkich czystych pól
             if (revealedCount === (gridSize * gridSize) - totalMines) {
                 preCashoutMenu();
             }
         }
     }
 
+    // Nowy krok pośredni: zamiast wypłaty, pokazuje menu wyboru 50/50
     function preCashoutMenu() {
-        if (!isGameActive || revealedCount === 0) return; // blokada przed pustym odbiorem
-        isGamblePhase = true; 
+        if (!isGameActive) return;
+        isGamblePhase = true; // zamraża planszę
         cashoutBtn.style.display = "none";
-        gambleContainer.style.display = "flex"; 
-        statusMsg.innerText = `Wygrana z pól: B ${pendingWinAmount}. Podejmij decyzję:`;
+        gambleContainer.style.display = "flex"; // pokazuje opcje ryzyka
+        statusMsg.innerText = `Chcesz bezpiecznie odebrać B ${pendingWinAmount}, czy zaryzykować podwojenie?`;
         statusMsg.style.color = "var(--accent-gold)";
     }
 
+    // Opcja A - Klasyczny zysk
     function confirmNormalCashout() {
         balance += pendingWinAmount;
         balanceDisplay.innerText = balance;
-        statusMsg.innerText = `Wypłacono bezpiecznie B ${pendingWinAmount} (x${currentMultiplier})`;
+        statusMsg.innerText = `Bezpieczny odbiór! Wypłacono B ${pendingWinAmount} (x${currentMultiplier})`;
         statusMsg.style.color = "#2a9d8f";
         gambleContainer.style.display = "none";
         gameOver(true, false, pendingWinAmount);
     }
 
+    // Opcja B - Tryb Ryzyka 50/50 o x2
     function executeGamble5050() {
         gambleContainer.style.display = "none";
+        
+        // Losowanie szansy 50/50 (0 lub 1)
         const isSuccessful = Math.random() < 0.5;
 
         if (isSuccessful) {
             let doubleWin = pendingWinAmount * 2;
             balance += doubleWin;
             balanceDisplay.innerText = balance;
-            statusMsg.innerText = `💥 SUKCES! Podwoiłeś wygraną i zdobywasz B ${doubleWin}!`;
+            statusMsg.innerText = `💥 SUKCES! Moneta sprzyja! Podwoiłeś stawkę i zgarniasz B ${doubleWin}!`;
             statusMsg.style.color = "var(--accent-gold)";
             gameOver(true, false, doubleWin);
         } else {
-            statusMsg.innerText = `❌ LOS CI NIE SPRZYJAŁ! Tracisz wszystko w grze ryzyka.`;
+            statusMsg.innerText = `❌ PRZEGRANA w 50/50! Los odebrał wszystko z tej rundy.`;
             statusMsg.style.color = "#e63946";
-            gameOver(false, false, 0); 
+            gameOver(false, false, 0); // gracz traci wygraną z rundy, ale nie trafił miny bezpośrednio
         }
     }
 
@@ -687,7 +685,7 @@
         });
 
         if (hitMine && !isWin) {
-            statusMsg.innerText = "BOMBA! Trafiłeś na minę.";
+            statusMsg.innerText = "BOMBA! Przegrałeś stawkę.";
             statusMsg.style.color = "#e63946";
         }
 
@@ -698,10 +696,11 @@
         cashoutBtn.style.display = "none";
         gambleContainer.style.display = "none";
         
+        // SYSTEM RESETOWANIA - Sprawdzenie czy saldo spadło poniżej krytycznych 10 monet
         if (balance < 10) {
             startBtn.style.display = "none";
-            resetBtn.style.display = "block";
-            statusMsg.innerText = "Bankructwo! Brak środków na minimalną stawkę (10 monet).";
+            resetBtn.style.display = "block"; // aktywacja przycisku resetu
+            statusMsg.innerText = "Bankructwo! Masz mniej niż minimalny zakład (10 monet).";
             statusMsg.style.color = "#e63946";
         } else {
             startBtn.style.display = "block";
@@ -712,7 +711,7 @@
     function resetGameBalance() {
         balance = 50;
         balanceDisplay.innerText = balance;
-        statusMsg.innerText = "Konto doładowane! Możesz grać dalej.";
+        statusMsg.innerText = "Saldo odnowione do 50 monet! Rozpocznij grę.";
         statusMsg.style.color = "#ffffff";
         
         resetBtn.style.display = "none";
